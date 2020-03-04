@@ -2,6 +2,8 @@
 //  Measure approximate CPU load
 //  Sees how many times loop() can execute compared to historic best times
 //
+// Phil Jansen 3apr2020
+//
 #include "Streaming.h"
 #include "limits.h"
 
@@ -41,9 +43,11 @@ class TimerPKJ
       m_previous = currentTime;
     }
 
-    long overshoot(void) {
+    long overshoot(void) // is task running late?
+    {
       return m_overshoot;
     };
+    
   private:
     long m_period;
     unsigned long m_previous;
@@ -78,16 +82,16 @@ class CPUmeter
       // more loops is lower CPU load absorbed by other tasks
       auto seconds = (updateRate / 1000.);
 
-      Serial << "Best " << (int) (bestCase / seconds)
-             << " Worst " << (int) (worstCase / seconds)
-             << " current " << (int) (recentCase / seconds)
-             << " loops/sec " << endl;
+      Serial << F("Best ") << (int) (bestCase / seconds)
+             << F(" Worst ") << (int) (worstCase / seconds)
+             << F(" current ") << (int) (recentCase / seconds)
+             << F(" loops/sec ") << endl;
       report();
     }
     void report(void)
     {
       int percentCPU = (int) (100. *(bestCase - recentCase) / (double)bestCase);
-      Serial << "CPU load about " << percentCPU << "%" << endl;
+      Serial << F("CPU load about ") << percentCPU << F("%") << endl;
     };
 
   private:
@@ -128,7 +132,7 @@ void wasteSomeTime(void)
     percentLoad -= 10; // adjust load
     if (percentLoad < 0)
       percentLoad = 100; // wrap into 0-100%
-    Serial << "Load set to " << percentLoad << "%" << endl;
+    Serial << F("Load set to ") << percentLoad << F("%") << endl;
   }
 }
 
@@ -142,7 +146,7 @@ void maintenance(void)
 
   if (springCleaning.ready())
   {
-    Serial << "archiving logs...";
+    Serial << F("archiving logs...");
     delay(150); // simulated maintenance
   }
 }
@@ -163,7 +167,7 @@ void starvationCheck(void)
   if (deadline.ready())
   {
     // detecting sluggish response..
-    Serial << "Refresh is LATE by " << deadline.overshoot() << "ms!" << endl;
+    Serial << F("Refresh is LATE by ") << deadline.overshoot() << F("ms!") << endl;
     // TODO:
     // There may be a serious problem.
     // Turn off motors, set brakes etc.
@@ -176,8 +180,12 @@ void setup() {
   Serial.begin(115200);
   while (!Serial)
     ; // for Leonardo USB...
-  Serial << "Ready." << endl;
-  Serial << "Running " << __FILE__ << endl;
+
+  // What was loaded to this board again?
+  Serial << F("Running ") << F(__FILE__) << endl;
+  Serial << F("Built ") << F(__DATE__) << /* ", " << F(__TIME__) << */ endl;
+
+  Serial << F("Ready.") << endl;
 }
 
 //////////////////////////////////////////////////////////
@@ -189,7 +197,7 @@ void loop() {
   maintenance();
 
   cpuMeter.update();  // measure performance
-  starvationCheck();  // performance warning
+  starvationCheck();  // stutter warning
 
   if (reporter.ready())
   {
