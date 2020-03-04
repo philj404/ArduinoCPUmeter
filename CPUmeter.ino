@@ -47,7 +47,7 @@ class TimerPKJ
     {
       return m_overshoot;
     };
-    
+
   private:
     long m_period;
     unsigned long m_previous;
@@ -151,18 +151,16 @@ void maintenance(void)
   }
 }
 
-
 //////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////
-// are tasks starving a little?
+// starvationCheck() -- are tasks starving a little?
 // helps determine if there's "enough" margin to meet
 // your requirements
 //
-// NOTE: This won't run/warn you if the task loop is completely blocked
+// NOTE: This won't run/warn you if the task loop just blocks/halts
 //
 void starvationCheck(void)
 {
-  static TimerPKJ deadline(20); // millisec to "sluggish" response
+  static TimerPKJ deadline(20); // response becoming "sluggish"?
 
   if (deadline.ready())
   {
@@ -182,8 +180,12 @@ void setup() {
     ; // for Leonardo USB...
 
   // What was loaded to this board again?
-  Serial << F("Running ") << F(__FILE__) << endl;
-  Serial << F("Built ") << F(__DATE__) << /* ", " << F(__TIME__) << */ endl;
+  Serial << F("Running ") << F(__FILE__) << endl
+         << F(" Built ") << F(__DATE__)
+#ifdef SHOW_BUILDTIME
+         << F(", ") << F(__TIME__)
+#endif
+         << endl;
 
   Serial << F("Ready.") << endl;
 }
