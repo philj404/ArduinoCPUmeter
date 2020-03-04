@@ -87,7 +87,7 @@ class CPUmeter
     void report(void)
     {
       int percentCPU = (int) (100. *(bestCase - recentCase) / (double)bestCase);
-      Serial << "CPU load at " << percentCPU << "%" << endl;
+      Serial << "CPU load about " << percentCPU << "%" << endl;
     };
 
   private:
@@ -177,6 +177,7 @@ void setup() {
   while (!Serial)
     ; // for Leonardo USB...
   Serial << "Ready." << endl;
+  Serial << "Running " << __FILE__ << endl;
 }
 
 //////////////////////////////////////////////////////////
