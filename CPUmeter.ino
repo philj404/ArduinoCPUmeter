@@ -179,12 +179,20 @@ void setup() {
   while (!Serial)
     ; // for Leonardo USB...
 
-  // What was loaded to this board again?
-  Serial << F("Running ") << F(__FILE__) << endl
-         << F(" Built ") << F(__DATE__)
+  // Forgot what sketch was loaded to this board?
+  //
+  // Hint1: use the F() macro to keep const strings in FLASH and save RAM
+  // Hint2: "Compiler " "catenates consecutive "
+  //         "strings together"
+  //         (can improve readability for very long strings)
+  //
+  Serial <<
+         F(
+           "Running " __FILE__ ", Built " __DATE__
 #ifdef SHOW_BUILDTIME
-         << F(", ") << F(__TIME__)
+           ", " __TIME__
 #endif
+         )
          << endl;
 
   Serial << F("Ready.") << endl;
