@@ -147,7 +147,7 @@ void maintenance(void)
   if (springCleaning.ready())
   {
     Serial << F("archiving logs...");
-    delay(150); // simulated maintenance
+    delay(150); // simulated large maintenance task
   }
 }
 
