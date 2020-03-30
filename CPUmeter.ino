@@ -7,75 +7,33 @@
 #include "Streaming.h"
 #include "limits.h"
 
-//////////////////////////////////////////////////////////
-class TimerPKJ
-{
-  public:
-    TimerPKJ(long period):  // in millisec
-      m_period(period), m_overshoot(0)
-    {
-      m_previous = millis();
-      //m_previous = 0;
-    };
+#include <timer.h>
 
-    bool ready(void)  // true when it's time to do something -- resets
-    {
-      auto currentTime = millis();
-      bool isReady = (m_period > 0) && (currentTime - m_previous >= m_period);
-      if (isReady)
-      {
-        reset();
-        //m_previous = currentTime;
-      }
-      return isReady;
-    }
-
-    void period(long newPeriod) // negative period turns timer off
-    {
-      m_period = newPeriod;
-    };
-
-    // reset timeout
-    void reset(void)
-    {
-      auto currentTime = millis();
-      m_overshoot = currentTime - m_previous;
-      m_previous = currentTime;
-    }
-
-    long overshoot(void) // is task running late?
-    {
-      return m_overshoot;
-    };
-
-  private:
-    long m_period;
-    unsigned long m_previous;
-    long m_overshoot;
-};
+auto timer = timer_create_default(); // create a timer with default settings
 
 //////////////////////////////////////////////////////////
+//static int loopCount = 0;
 class CPUmeter
 {
   public:
-    CPUmeter(void): timer(updateRate)
+    CPUmeter(void)
     {
       bestCase = LONG_MIN;
       worstCase = LONG_MAX;
+      recentCase = 0;
       loopCount = 0;
     };
     void update(void)
     {
-      loopCount++;
-      if (timer.ready())
-      {
-        recentCase = loopCount;
-        loopCount = 0;
-        bestCase = max(bestCase, recentCase);
-        worstCase = min(worstCase, recentCase);
-        //report(loopCount);
-      }
+      recentCase = loopCount;
+      loopCount = 0;
+      bestCase = max(bestCase, recentCase);
+      worstCase = min(worstCase, recentCase);
     }
+    void anotherLoop(void)
+    {
+      loopCount++;
+    };
 
     void longReport(void)
     {
@@ -94,17 +52,21 @@ class CPUmeter
       Serial << F("CPU load about ") << percentCPU << F("%") << endl;
     };
 
+    static const int updateRate = 5000; // millisec
+
   private:
-    TimerPKJ timer;
     long recentCase;
     long bestCase;
     long worstCase;
     long loopCount;
-    static const int updateRate = 5000; // millisec
 };
-
 CPUmeter cpuMeter;
-TimerPKJ reporter(10000);
+
+bool updateMeter(void)
+{
+  cpuMeter.update();
+  return true; // repeat
+}
 
 //////////////////////////////////////////////////////////
 // Waste a variable amount of time.
@@ -112,43 +74,37 @@ TimerPKJ reporter(10000);
 // -- it sometimes has nothing to do so finishes quickly
 // -- it yields "often enough"
 //
-void wasteSomeTime(void)
+static int percentLoad = 0; // start with a low load
+static const int timeSlice = 10;
+
+bool wasteSomeTime(void)
 {
-  static int percentLoad = 0; // start with a low load
-  static const int timeSlice = 10;
-  static TimerPKJ importantWork(timeSlice);
-  static TimerPKJ loadAdjuster(15000);
-
-  if (importantWork.ready())
+  if (random(0, 99) <= percentLoad)
   {
-    if (random(0, 99) <= percentLoad)
-    {
-      delay(timeSlice); // simulated important thing done!
-    }
+    delay(timeSlice); // simulated important thing done!
   }
+  return true; // repeat
+}
 
-  if (loadAdjuster.ready())
-  {
-    percentLoad -= 10; // adjust load
-    if (percentLoad < 0)
-      percentLoad = 100; // wrap into 0-100%
-    Serial << F("Load set to ") << percentLoad << F("%") << endl;
-  }
+//////////////////////////////////////////////////////////
+bool adjustLoad(void)
+{
+  percentLoad -= 10; // adjust load
+  if (percentLoad < 0)
+    percentLoad = 100; // wrap into 0-100%
+  Serial << F("Load set to ") << percentLoad << F("%") << endl;
+  return true; // repeat
 }
 
 //////////////////////////////////////////////////////////
 // perform a "marginally long" maintenance task
 // Note that this may be long enough to (for example) make audio/video stutter
 //
-void maintenance(void)
+bool maintenance(void)
 {
-  static TimerPKJ springCleaning(37000);
-
-  if (springCleaning.ready())
-  {
-    Serial << F("archiving logs...");
-    delay(150); // simulated large maintenance task
-  }
+  Serial << F("archiving logs...");
+  delay(150); // simulated large maintenance task
+  return true; // repeat
 }
 
 //////////////////////////////////////////////////////////
@@ -158,20 +114,37 @@ void maintenance(void)
 //
 // NOTE: This won't run/warn you if the task loop just blocks/halts
 //
-void starvationCheck(void)
+bool starvationCheck(void)
 {
-  static TimerPKJ deadline(20); // response becoming "sluggish"?
-
-  if (deadline.ready())
+  static const int timeLimit = 50;
+  static unsigned long previous = 0;
+  auto current = millis();
+  auto theDelay = current - previous;
+  auto overshoot = theDelay - timeLimit;
+  if (overshoot > 10)
   {
     // detecting sluggish response..
-    Serial << F("Refresh is LATE by ") << deadline.overshoot() << F("ms!") << endl;
+    Serial << F("Refresh is LATE by ") << overshoot << F("ms!") << endl;
     // TODO:
     // There may be a serious problem.
     // Turn off motors, set brakes etc.
   }
-  deadline.reset();
+  previous = current;
+  return true;
 }
+
+bool cpuMeterLongReport(void)
+{
+  cpuMeter.longReport();
+  return true; // repeat
+}
+
+//////////////////////////////////////////////////////////
+bool toggle_led(void *) {
+  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // toggle the LED
+  return true; // repeat? true
+}
+
 //////////////////////////////////////////////////////////
 void setup() {
   // put your setup code here, to run once:
@@ -195,6 +168,18 @@ void setup() {
          )
          << endl;
 
+  pinMode(LED_BUILTIN, OUTPUT); // set LED pin to OUTPUT
+
+  // toggle_led() every sec
+  timer.every(1000, toggle_led);
+
+  timer.every(37000, maintenance);
+  timer.every(15000, adjustLoad);
+  timer.every(   10, wasteSomeTime);
+  timer.every(10000, cpuMeterLongReport);
+  timer.every(CPUmeter::updateRate, updateMeter);
+  timer.every(   50, starvationCheck);  // stutter warning
+
   Serial << F("Ready.") << endl;
 }
 
@@ -203,15 +188,7 @@ void loop() {
 
   // put your main code here, to run repeatedly:
 
-  wasteSomeTime();  // useful stuff...
-  maintenance();
+  timer.tick();
 
-  cpuMeter.update();  // measure performance
-  starvationCheck();  // stutter warning
-
-  if (reporter.ready())
-  {
-    cpuMeter.longReport();
-    //cpuMeter.report();
-  }
+  cpuMeter.anotherLoop();
 }
