@@ -2,7 +2,7 @@
 //  Measure approximate CPU load
 //  Sees how many times loop() can execute compared to historic best times
 //
-// Phil Jansen 3apr2020
+// Phil Jansen 29apr2020
 //
 #include "Streaming.h"
 #include "limits.h"
