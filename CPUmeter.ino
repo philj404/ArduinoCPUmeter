@@ -1,67 +1,18 @@
-B
+
 // CPUmeter
 //  Measure approximate CPU load
 //  Sees how many times loop() can execute compared to historic best times
 //
 // Phil Jansen 29apr2020
 //
-#include "Streaming.h"
-#include "limits.h"
+//#include "Streaming.h"
+//#include "limits.h"
 
 #include <timer.h>
-
 auto timer = timer_create_default(); // create a timer with default settings
 
-//////////////////////////////////////////////////////////
-//static int loopCount = 0;
-class CPUmeter
-{
-  public:
-    CPUmeter(void)
-    {
-      bestCase = LONG_MIN;
-      worstCase = LONG_MAX;
-      recentCase = 0;
-      loopCount = 0;
-    };
-    void update(void)
-    {
-      recentCase = loopCount;
-      loopCount = 0;
-      bestCase = max(bestCase, recentCase);
-      worstCase = min(worstCase, recentCase);
-    }
-    void anotherLoop(void)
-    {
-      loopCount++;
-    };
+#include "CPUmeter.h"
 
-    void longReport(void)
-    {
-      // more loops is lower CPU load absorbed by other tasks
-      auto seconds = (updateRate / 1000.);
-
-      Serial << F("Best ") << (int) (bestCase / seconds)
-             << F(" Worst ") << (int) (worstCase / seconds)
-             << F(" current ") << (int) (recentCase / seconds)
-             << F(" loops/sec ") << endl;
-      report();
-    }
-    void report(void)
-    {
-      int percentCPU = (int) (100. *(bestCase - recentCase) / (double)bestCase);
-      Serial << F("CPU load about ") << percentCPU << F("%") << endl;
-    };
-
-    static const int updateRate = 5000; // millisec
-
-  private:
-    long recentCase;
-    long bestCase;
-    long worstCase;
-    long loopCount;
-};
-CPUmeter cpuMeter;
 
 bool updateMeter(void)
 {
@@ -76,7 +27,7 @@ bool updateMeter(void)
 // -- it yields "often enough"
 //
 static int percentLoad = 0; // start with a low load
-static const int timeSlice = 10;
+static const int timeSlice = 10;  // millisec
 
 bool wasteSomeTime(void)
 {
@@ -93,7 +44,9 @@ bool adjustLoad(void)
   percentLoad -= 10; // adjust load
   if (percentLoad < 0)
     percentLoad = 100; // wrap into 0-100%
-  Serial << F("Load set to ") << percentLoad << F("%") << endl;
+  Serial.print(F("Load set to "));
+  Serial.print(percentLoad);
+  Serial.println(F("%"));
   return true; // repeat
 }
 
@@ -103,7 +56,7 @@ bool adjustLoad(void)
 //
 bool maintenance(void)
 {
-  Serial << F("archiving logs...");
+  Serial.print(F("archiving logs..."));
   delay(150); // simulated large maintenance task
   return true; // repeat
 }
@@ -125,7 +78,9 @@ bool starvationCheck(void)
   if (overshoot > 10)
   {
     // detecting sluggish response..
-    Serial << F("Refresh is LATE by ") << overshoot << F("ms!") << endl;
+    Serial.print(F("Refresh is LATE by "));
+    Serial.print(overshoot);
+    Serial.println(F("ms!"));
     // TODO:
     // There may be a serious problem.
     // Turn off motors, set brakes etc.
@@ -160,14 +115,13 @@ void setup() {
   //         "strings together"
   //         (can improve readability for very long strings)
   //
-  Serial <<
-         F(
-           "Running " __FILE__ ", Built " __DATE__
+  Serial.println(
+    F(
+      "Running " __FILE__ ", Built " __DATE__
 #ifdef SHOW_BUILDTIME
-           ", " __TIME__
+      ", " __TIME__
 #endif
-         )
-         << endl;
+    ));
 
   pinMode(LED_BUILTIN, OUTPUT); // set LED pin to OUTPUT
 
@@ -181,7 +135,7 @@ void setup() {
   timer.every(CPUmeter::updateRate, updateMeter);
   timer.every(   50, starvationCheck);  // stutter warning
 
-  Serial << F("Ready.") << endl;
+  Serial.println( F("Ready."));
 }
 
 //////////////////////////////////////////////////////////
