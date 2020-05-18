@@ -2,14 +2,12 @@
 #include "CPUmeter.h"
 #include "limits.h"
 
-CPUmeter cpuMeter;
-
 //////////////////////////////////////////////////////////
 CPUmeter::CPUmeter(void)
 {
   resetStats();
   deadline = 0;
-  updateRate = defaultUpdateRate;
+  sampleInterval = defaultSampleInterval;
   worstDelay = 0;
 };
 
@@ -23,7 +21,7 @@ void CPUmeter::update(void)
 }
 
 //////////////////////////////////////////////////////////
-void CPUmeter::anotherLoop(void)
+void CPUmeter::loopUpdate(void)
 {
   loopCount++;
 
@@ -36,7 +34,7 @@ void CPUmeter::anotherLoop(void)
     deadlinesMissed++;
   }
   
-  if (now - timeSinceLastUpdate > updateRate)
+  if (now - timeSinceLastUpdate > sampleInterval)
   {
     update(); // accumulate stats
     timeSinceLastUpdate = now;
@@ -49,7 +47,7 @@ void CPUmeter::anotherLoop(void)
 void CPUmeter::longReport(Stream & client)
 {
   // more loops is lower CPU load absorbed by other tasks
-  auto seconds = (updateRate / 1000.);
+  auto seconds = (sampleInterval / 1000.);
 
   client.print(F("Best "));
   client.print((int) (bestCase / seconds));
@@ -95,15 +93,15 @@ void CPUmeter::resetStats(void)
 };
 
 //////////////////////////////////////////////////////////
-void CPUmeter::setDeadline(int newDeadline)
+void CPUmeter::setLoopDeadline(int newDeadline)
 {
   deadline = newDeadline;
   resetStats();
 };
 
 //////////////////////////////////////////////////////////
-void CPUmeter::setUpdateRate(int newRate)
+void CPUmeter::setSampleInterval(int newRate)
 {
-  updateRate = newRate;
+  sampleInterval = newRate;
   resetStats();
 };

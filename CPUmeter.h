@@ -1,35 +1,37 @@
+#ifndef CPU_METER_H
+#define CPU_METER_H
 //////////////////////////////////////////////////////////
 class CPUmeter
 {
   public:
     CPUmeter(void);
-    void anotherLoop(void);
+    void loopUpdate(void);
 
     void longReport(class Stream & client);
     void report(class Stream & client);
 
-    static const int defaultUpdateRate = 5000; // millisec
-    void setUpdateRate(int newRate);
-    void setDeadline(int newDeadline);
+    static const int defaultSampleInterval = 5000; // ms between readings
+    void setSampleInterval(int newInterval);
+    void setLoopDeadline(int newDeadline);
 
     void resetStats(void);
 
   private:
     void update(void);
 
-    long loopCount;
-    long updateRate;
+    long sampleInterval;
+    long deadline;
+        
+    unsigned long timeSinceLastUpdate;
+    unsigned long timeSinceLastLoop;
     
+    long loopCount;
+
     long recentCase;
     long bestCase;
     long worstCase;
-
-    long deadline;
     long deadlinesMissed;
     long worstDelay;
-
-    unsigned long timeSinceLastUpdate;
-    unsigned long timeSinceLastLoop;
 };
 
-extern CPUmeter cpuMeter;
+#endif

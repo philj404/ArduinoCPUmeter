@@ -5,14 +5,46 @@
 //
 // Phil Jansen 29apr2020
 //
-//#include "Streaming.h"
-//#include "limits.h"
-
-#include <timer.h>
-auto timer = timer_create_default(); // create a timer with default settings
-
 #include "CPUmeter.h"
 
+CPUmeter cpuMeter;
+
+///////////////////////////////////////////////////////////////////////////
+// SimpleTimer
+// timer which can trigger at regular intervals.
+//
+// (If you need something fancier, the arduino-timer library is nice).
+//
+class SimpleTimer
+{
+  public:
+    SimpleTimer(long interval)
+    {
+      lastUpdate = millis();
+      updateInterval = interval;
+    };
+
+    bool timeIsUp(void)
+    {
+      bool ready = false;
+      auto now = millis();
+      if (now - lastUpdate > updateInterval)
+      {
+        ready = true;
+        lastUpdate = now; // time is up -- reset timer
+      }
+      return ready;
+    };
+
+    bool notReady(void)
+    {
+      return !timeIsUp();
+    };
+
+  private:
+    long lastUpdate;
+    long updateInterval;
+};
 
 //////////////////////////////////////////////////////////
 // Waste a variable amount of time.
@@ -22,86 +54,70 @@ auto timer = timer_create_default(); // create a timer with default settings
 //
 static int percentLoad = 0; // start with a low load
 static const int timeSlice = 10;  // millisec
-
-bool wasteSomeTime(void)
+//
+void checkWasteSomeTime(void)
 {
+  static SimpleTimer timeWaster(timeSlice);
+  if (timeWaster.notReady())
+    return;
+
   if (random(0, 99) <= percentLoad)
   {
     delay(timeSlice); // simulated important thing done!
   }
-  return true; // repeat
 }
 
 //////////////////////////////////////////////////////////
-bool adjustLoad(void)
+void checkAdjustLoad(void)
 {
+  static SimpleTimer loadAdjuster(15000);
+  if (loadAdjuster.notReady())
+    return;
+
   percentLoad -= 10; // adjust load
   if (percentLoad < 0)
     percentLoad = 100; // wrap into 0-100%
   Serial.print(F("Load set to "));
   Serial.print(percentLoad);
   Serial.println(F("%"));
-  return true; // repeat
 }
 
 //////////////////////////////////////////////////////////
 // perform a "marginally long" maintenance task
 // Note that this may be long enough to (for example) make audio/video stutter
 //
-bool maintenance(void)
+void checkMaintenance(void)
 {
+  static SimpleTimer maintenanceInterval(37000);
+  if (maintenanceInterval.notReady())
+    return;
+
   Serial.print(F("archiving logs..."));
   delay(150); // simulated large maintenance task
-  return true; // repeat
 }
 
-//////////////////////////////////////////////////////////
-// starvationCheck() -- are tasks starving a little?
-// helps determine if there's "enough" margin to meet
-// your requirements
-//
-// NOTE: This won't run/warn you if the task loop just blocks/halts
-//
-bool starvationCheck(void)
+void checkMeterLongReport(void)
 {
-  static const int timeLimit = 50;
-  static unsigned long previous = 0;
-  auto current = millis();
-  auto theDelay = current - previous;
-  auto overshoot = theDelay - timeLimit;
-  if (overshoot > 10)
-  {
-    // detecting sluggish response..
-    Serial.print(F("Refresh is LATE by "));
-    Serial.print(overshoot);
-    Serial.println(F("ms!"));
-    // TODO:
-    // There may be a serious problem.
-    // Turn off motors, set brakes etc.
-  }
-  previous = current;
-  return true;
-}
+  static SimpleTimer reportInterval(10000);
+  if (reportInterval.notReady())
+    return;
 
-bool cpuMeterLongReport(void)
-{
   cpuMeter.longReport(Serial);
-  return true; // repeat
 }
 
 //////////////////////////////////////////////////////////
-bool toggle_led(void *) {
+void checkToggleLED()
+{
+  static SimpleTimer ledInterval(1000);
+  if (ledInterval.notReady())
+    return;
+
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // toggle the LED
-  return true; // repeat? true
 }
 
 //////////////////////////////////////////////////////////
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(115200);
-  while (!Serial)
-    ; // for Leonardo USB...
-
+void showID(void)
+{
   // Forgot what sketch was loaded to this board?
   //
   // Hint1: use the F() macro to keep const strings in FLASH and save RAM
@@ -116,22 +132,22 @@ void setup() {
       ", " __TIME__
 #endif
     ));
+}
+
+//////////////////////////////////////////////////////////
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  while (!Serial)
+    ; // for Leonardo USB...
+
+  showID();
 
   pinMode(LED_BUILTIN, OUTPUT); // set LED pin to OUTPUT
 
-  // toggle_led() every sec
-  timer.every(1000, toggle_led);
+  cpuMeter.setSampleInterval(4000);
+  cpuMeter.setLoopDeadline(50);
 
-  timer.every(37000, maintenance);
-  timer.every(15000, adjustLoad);
-  timer.every(   10, wasteSomeTime);
-  timer.every(10000, cpuMeterLongReport);
-  //timer.every(CPUmeter::defaultUpdateRate, updateMeter);
-  timer.every(   50, starvationCheck);  // stutter warning
-
-  cpuMeter.setUpdateRate(4000);
-  cpuMeter.setDeadline(50);
-  
   Serial.println( F("Ready."));
 }
 
@@ -139,8 +155,11 @@ void setup() {
 void loop() {
 
   // put your main code here, to run repeatedly:
+  checkToggleLED();
+  checkWasteSomeTime();
+  checkMaintenance();
+  checkAdjustLoad();
+  checkMeterLongReport();
 
-  timer.tick();
-
-  cpuMeter.anotherLoop();
+  cpuMeter.loopUpdate();
 }
