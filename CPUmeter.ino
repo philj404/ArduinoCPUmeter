@@ -14,12 +14,6 @@ auto timer = timer_create_default(); // create a timer with default settings
 #include "CPUmeter.h"
 
 
-bool updateMeter(void)
-{
-  cpuMeter.update();
-  return true; // repeat
-}
-
 //////////////////////////////////////////////////////////
 // Waste a variable amount of time.
 // This is a well-behaved task
@@ -91,7 +85,7 @@ bool starvationCheck(void)
 
 bool cpuMeterLongReport(void)
 {
-  cpuMeter.longReport();
+  cpuMeter.longReport(Serial);
   return true; // repeat
 }
 
@@ -132,9 +126,12 @@ void setup() {
   timer.every(15000, adjustLoad);
   timer.every(   10, wasteSomeTime);
   timer.every(10000, cpuMeterLongReport);
-  timer.every(CPUmeter::updateRate, updateMeter);
+  //timer.every(CPUmeter::defaultUpdateRate, updateMeter);
   timer.every(   50, starvationCheck);  // stutter warning
 
+  cpuMeter.setUpdateRate(4000);
+  cpuMeter.setDeadline(50);
+  
   Serial.println( F("Ready."));
 }
 

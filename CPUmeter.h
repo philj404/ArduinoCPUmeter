@@ -3,20 +3,33 @@ class CPUmeter
 {
   public:
     CPUmeter(void);
-    void update(void);
     void anotherLoop(void);
 
-    void longReport(void);
+    void longReport(class Stream & client);
+    void report(class Stream & client);
 
-    void report(void);
-    
-    static const int updateRate = 5000; // millisec
+    static const int defaultUpdateRate = 5000; // millisec
+    void setUpdateRate(int newRate);
+    void setDeadline(int newDeadline);
+
+    void resetStats(void);
 
   private:
+    void update(void);
+
+    long loopCount;
+    long updateRate;
+    
     long recentCase;
     long bestCase;
     long worstCase;
-    long loopCount;
+
+    long deadline;
+    long deadlinesMissed;
+    long worstDelay;
+
+    unsigned long timeSinceLastUpdate;
+    unsigned long timeSinceLastLoop;
 };
 
 extern CPUmeter cpuMeter;
