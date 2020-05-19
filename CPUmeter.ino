@@ -47,6 +47,9 @@ class SimpleTimer
 };
 
 //////////////////////////////////////////////////////////
+// Simulated time-consuming tasks.
+//
+//////////////////////////////////////////////////////////
 // Waste a variable amount of time.
 // This is a well-behaved task
 // -- it sometimes has nothing to do so finishes quickly
@@ -68,6 +71,8 @@ void checkWasteSomeTime(void)
 }
 
 //////////////////////////////////////////////////////////
+// changes how busy wastSomeTime() is
+//
 void checkAdjustLoad(void)
 {
   static SimpleTimer loadAdjuster(15000);
@@ -96,6 +101,9 @@ void checkMaintenance(void)
   delay(150); // simulated large maintenance task
 }
 
+//////////////////////////////////////////////////////////
+// send a CPU loading summary to <Serial>
+//
 void checkMeterLongReport(void)
 {
   static SimpleTimer reportInterval(10000);
@@ -119,12 +127,6 @@ void checkToggleLED()
 void showID(void)
 {
   // Forgot what sketch was loaded to this board?
-  //
-  // Hint1: use the F() macro to keep const strings in FLASH and save RAM
-  // Hint2: "Compiler " "catenates consecutive "
-  //         "strings together"
-  //         (can improve readability for very long strings)
-  //
   Serial.println(
     F(
       "Running " __FILE__ ", Built " __DATE__
