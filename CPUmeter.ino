@@ -110,7 +110,7 @@ void checkMeterLongReport(void)
   if (reportInterval.notReady())
     return;
 
-  cpuMeter.longReport(Serial);
+  cpuMeter.longReportTo(Serial);
 }
 
 //////////////////////////////////////////////////////////

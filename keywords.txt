@@ -1,0 +1,29 @@
+#######################################
+# Syntax Coloring Map For SimpleSerialShell
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+loopUpdate	KEYWORD2
+longReportTo	KEYWORD2
+reportTo	KEYWORD2
+setSampleInterval		KEYWORD2
+setLoopDeadline	KEYWORD2
+resetStats	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+

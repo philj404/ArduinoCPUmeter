@@ -7,8 +7,8 @@ class CPUmeter
     CPUmeter(void);
     void loopUpdate(void);
 
-    void longReport(class Stream & client);
-    void report(class Stream & client);
+    void longReportTo(class Stream & client);
+    void reportTo(class Stream & client);
 
     static const int defaultSampleInterval = 5000; // ms between readings
     void setSampleInterval(int newInterval);

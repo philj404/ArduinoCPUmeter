@@ -44,7 +44,7 @@ void CPUmeter::loopUpdate(void)
 };
 
 //////////////////////////////////////////////////////////
-void CPUmeter::longReport(Stream & client)
+void CPUmeter::longReportTo(Stream & client)
 {
   // more loops is lower CPU load absorbed by other tasks
   auto seconds = (sampleInterval / 1000.);
@@ -69,10 +69,10 @@ void CPUmeter::longReport(Stream & client)
     client.println( deadlinesMissed );
   }
 
-  report(client);
+  reportTo(client);
 }
 //////////////////////////////////////////////////////////
-void CPUmeter::report(Stream & client)
+void CPUmeter::reportTo(Stream & client)
 {
   int percentCPU = (int) (100. *(bestCase - recentCase) / (double)bestCase);
   client.print(F("CPU load about "));
