@@ -1,9 +1,10 @@
 
-// CPUmeter
+// ExerciseCPUmeter
 //  Measure approximate CPU load
 //  Sees how many times loop() can execute compared to historic best times
+//  Check for missed deadlines too.
 //
-// Phil Jansen 29apr2020
+// Phil Jansen 19may2020
 //
 #include "CPUmeter.h"
 
