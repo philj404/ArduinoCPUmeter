@@ -55,6 +55,15 @@ Best 24149 Worst 2059 current 18808 loops/sec
 CPU load about 22%
 ```
 
+### Simple access to summaries
+Some people may want to format their own summary.  Here are some helper methods.
+
+```int meter.getPercentLoad()``` returns the most recent percent CPU load measurment.
+
+```int meter.getWorstDelay()``` returns the slowest loop repetition time found.
+
+```int meter.getDeadlinesMissed()``` returns the number of times the deadline was missed so far
+
 ### Configuration
 ```meter.setSampleInterval(int millisec)```
 The default meaurement rate counts loops every 5 seconds.  If you need a 2 second rate, you can set it with ```setSampleInterval(2000);```

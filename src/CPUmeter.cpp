@@ -58,7 +58,7 @@ void CPUmeter::longReportTo(Stream & client)
   client.println(F(" loops/sec "));
 
   client.print(F(" Worst delay "));
-  client.print( worstDelay );
+  client.print( getWorstDelay() );
   client.println(F(" ms"));
 
   if (deadline)
@@ -66,17 +66,36 @@ void CPUmeter::longReportTo(Stream & client)
     client.print(F(" Total "));
     client.print( deadline );
     client.print(F(" ms deadlines missed: "));
-    client.println( deadlinesMissed );
+    client.println( getDeadlinesMissed() );
   }
 
   reportTo(client);
 }
+
+//////////////////////////////////////////////////////////
+int CPUmeter::getPercentLoad(void)
+{
+  int percentCPU = (int) (100. *(bestCase - recentCase) / (double)bestCase);
+  return percentCPU;
+};
+
+//////////////////////////////////////////////////////////
+int CPUmeter::getWorstDelay(void)
+{
+  return worstDelay;
+};
+
+//////////////////////////////////////////////////////////
+int CPUmeter::getDeadlinesMissed(void)
+{
+  return deadlinesMissed;
+};
+
 //////////////////////////////////////////////////////////
 void CPUmeter::reportTo(Stream & client)
 {
-  int percentCPU = (int) (100. *(bestCase - recentCase) / (double)bestCase);
   client.print(F("CPU load about "));
-  client.print(percentCPU);
+  client.print( getPercentLoad() );
   client.println(F("%"));
 };
 
