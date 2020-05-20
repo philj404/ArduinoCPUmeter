@@ -7,6 +7,10 @@ class CPUmeter
     CPUmeter(void);
     void loopUpdate(void);
 
+    int getPercentLoad(void);
+    int getWorstDelay(void);
+    int getDeadlinesMissed(void);
+
     void longReportTo(class Stream & client);
     void reportTo(class Stream & client);
 
