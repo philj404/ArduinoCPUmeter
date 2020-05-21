@@ -98,7 +98,7 @@ void checkMaintenance(void)
   if (maintenanceInterval.notReady())
     return;
 
-  Serial.print(F("archiving logs..."));
+  Serial.println(F("archiving logs..."));
   delay(150); // simulated large maintenance task
 }
 
@@ -130,10 +130,7 @@ void showID(void)
   // Forgot what sketch was loaded to this board?
   Serial.println(
     F(
-      "Running " __FILE__ ", Built " __DATE__
-#ifdef SHOW_BUILDTIME
-      ", " __TIME__
-#endif
+      "Running " __FILE__ ",\nBuilt " __DATE__
     ));
 }
 
@@ -148,7 +145,7 @@ void setup() {
 
   pinMode(LED_BUILTIN, OUTPUT); // set LED pin to OUTPUT
 
-  cpuMeter.setSampleInterval(4000);
+  cpuMeter.setSampleInterval(1000);
   cpuMeter.setLoopDeadline(50);
 
   Serial.println( F("Ready."));

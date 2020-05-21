@@ -25,22 +25,31 @@ void CPUmeter::loopUpdate(void)
 {
   loopCount++;
 
-  auto now = millis();
-  auto loopTimePassed = now - timeSinceLastLoop;
-  worstDelay = max(worstDelay, loopTimePassed);
-  if ( (deadline) && (loopTimePassed > deadline))
-  {
-    // loop stalled enough to cause concern
-    deadlinesMissed++;
+  auto nowMicros = micros();
+
+  if(firstLoopUpdate) {
+    // don't trust microsSinceLastLoop yet
+  } else {
+    auto loopTimePassed = nowMicros - microsSinceLastLoop;
+    worstDelay = max(worstDelay, loopTimePassed);
+    microLoopBest = min(microLoopBest, loopTimePassed);
+    microLoopWorst = max(microLoopWorst, loopTimePassed);
+    if ( (deadline) && (loopTimePassed > deadline))
+    {
+      // loop stalled enough to cause concern
+      deadlinesMissed++;
+    }
   }
   
-  if (now - timeSinceLastUpdate > sampleInterval)
+  auto nowMillis = millis();
+  if (nowMillis - timeSinceLastUpdate > sampleInterval)
   {
     update(); // accumulate stats
-    timeSinceLastUpdate = now;
+    timeSinceLastUpdate = nowMillis;
   }
 
-  timeSinceLastLoop = now;
+  microsSinceLastLoop = nowMicros;
+  firstLoopUpdate = false;
 };
 
 //////////////////////////////////////////////////////////
@@ -49,7 +58,7 @@ void CPUmeter::longReportTo(Stream & client)
   // more loops is lower CPU load absorbed by other tasks
   auto seconds = (sampleInterval / 1000.);
 
-  client.print(F("Best "));
+  client.print(F("LOOP RATE Best "));
   client.print((int) (bestCase / seconds));
   client.print(F(" Worst "));
   client.print((int) (worstCase / seconds));
@@ -59,12 +68,18 @@ void CPUmeter::longReportTo(Stream & client)
 
   client.print(F(" Worst delay "));
   client.print( getWorstDelay() );
-  client.println(F(" ms"));
+  client.println(F(" microsec"));
+
+  client.print(F(" Loop time best: "));
+  client.print(microLoopBest);
+  client.print(F(" worst: "));
+  client.print(microLoopWorst);
+  client.println(F(" microsec"));
 
   if (deadline)
   {
     client.print(F(" Total "));
-    client.print( deadline );
+    client.print( deadline/1000 );
     client.print(F(" ms deadlines missed: "));
     client.println( getDeadlinesMissed() );
   }
@@ -108,13 +123,18 @@ void CPUmeter::resetStats(void)
   loopCount = 0;
 
   deadlinesMissed = 0;
-  timeSinceLastUpdate = timeSinceLastLoop = millis();
+  timeSinceLastUpdate = millis();
+  microsSinceLastLoop = micros();
+
+  microLoopBest = LONG_MAX;
+  microLoopWorst = 0;
+  firstLoopUpdate = true;
 };
 
 //////////////////////////////////////////////////////////
 void CPUmeter::setLoopDeadline(int newDeadline)
 {
-  deadline = newDeadline;
+  deadline = newDeadline*1000L; // millisec to microsec
   resetStats();
 };
 

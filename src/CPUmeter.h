@@ -26,10 +26,14 @@ class CPUmeter
     long sampleInterval;
     long deadline;
         
-    unsigned long timeSinceLastUpdate;
-    unsigned long timeSinceLastLoop;
+    long timeSinceLastUpdate; // millisec
+    long microsSinceLastLoop;	// microsec
     
     long loopCount;
+
+    bool firstLoopUpdate;	// avoid loop startup issues
+    long microLoopBest;
+    long microLoopWorst;
 
     long recentCase;
     long bestCase;
