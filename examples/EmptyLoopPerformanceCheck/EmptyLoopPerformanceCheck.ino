@@ -6,8 +6,9 @@
 #include "CPUmeter.h"
 CPUmeter meter;
 
-// 31470 (nearly) empty loops/sec seems to be about as good as you can get
-// with an Arduino UNO, 16MHz.
+// xxxxx (nearly) empty loops/sec seems to be about as good as you can get
+// 31470 loops/sec with an Arduino UNO, 16MHz.
+// 47400 loops/sec with an Arduino 33 Nano BLE.
 
 ////////////////////////////////////////////////////////////////////////////////
 void showID(void)
