@@ -56,7 +56,7 @@ CPU load about 22%
 ```
 
 ### Simple access to summaries
-Some people may want to format their own summary.  Here are some helper methods.
+Some people may want to format their own summary, or route it to a bar graph, etc..  Here are some helper methods.
 
 ```int meter.getPercentLoad()``` returns the most recent percent CPU load measurment.
 
